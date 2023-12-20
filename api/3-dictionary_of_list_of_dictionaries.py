@@ -1,50 +1,32 @@
 #!/usr/bin/python3
 """script that use rest api for a given employee ID"""
-import requests
-import json
-
-def export_all_to_json():
-    base_url = 'https://jsonplaceholder.typicode.com'
-    users_url = f'{base_url}/users'
-    todos_url = f'{base_url}/todos'
-
-    try:
-        # Fetch all users
-        users_response = requests.get(users_url)
-        users_data = users_response.json()
-
-        # Fetch all todos
-        todos_response = requests.get(todos_url)
-        todos_data = todos_response.json()
-
-        # Create a dictionary to store data
-        all_data = {}
-        for user in users_data:
-            user_id = user['id']
-            username = user['username']
-            user_todos = []
-
-            # Collect todos for each user
-            for todo in todos_data:
-                if todo['userId'] == user_id:
-                    user_todos.append({
-                        'username': username,
-                        'task': todo['title'],
-                        'completed': todo['completed']
-                    })
-
-            # Store user todos in the dictionary
-            all_data[user_id] = user_todos
-
-        # Write data to JSON file
-        json_filename = 'todo_all_employees.json'
-        with open(json_filename, 'w') as json_file:
-            json.dump(all_data, json_file, indent=4)
-
-        print(f"Data exported to {json_filename} successfully!")
-
-    except requests.RequestException as e:
-        print("Error fetching data:", e)
+from json import dump
+from requests import get
+from sys import argv
 
 if __name__ == "__main__":
-    export_all_to_json()
+    users_url = "https://jsonplaceholder.typicode.com/users"
+    users_result = get(users_url).json()
+
+    big_dict = {}
+    for user in users_result:
+        todo_list = []
+
+        pep_fix = "https://jsonplaceholder.typicode.com"
+        todos_url = pep_fix + "/user/{}/todos".format(user.get("id"))
+        name_url = "https://jsonplaceholder.typicode.com/users/{}".format(
+            user.get("id"))
+
+        todo_result = get(todos_url).json()
+        name_result = get(name_url).json()
+        for todo in todo_result:
+            todo_dict = {}
+            todo_dict.update({"username": name_result.get("username"),
+                              "task": todo.get("title"),
+                              "completed": todo.get("completed")})
+            todo_list.append(todo_dict)
+
+        big_dict.update({user.get("id"): todo_list})
+
+    with open("todo_all_employees.json", 'w') as f:
+        dump(big_dict, f)
