@@ -1,4 +1,4 @@
-#!/usr#!/usr/bin/python3
+#!/usr/bin/python3
 """a module to get data from an API"""
 from sys import argv
 import csv
