@@ -1,23 +1,42 @@
 #!/usr/bin/python3
-"""script that use rest api for a given employee ID"""
-from json import dump
-from requests import get
+""" get data from an API"""
 from sys import argv
+import json
+import requests
+
+
+def get_employee_todos(user_id):
+    """get the reponse and format and print data"""
+    number_completed = 0
+
+    todos_url = "https://jsonplaceholder.typicode.com/todos?userId={}".format(
+        user_id)
+    todos_response = requests.get(todos_url)
+    todos = todos_response.json()
+
+    user_url = "https://jsonplaceholder.typicode.com/users/{}".format(user_id)
+    user_response = requests.get(user_url)
+    user = user_response.json()
+
+    employee_name = user.get("username")
+
+    data = {
+        user_id:
+            [
+                {
+                    "task": task.get("title"),
+                    "completed": task.get("completed"),
+                    "username": employee_name
+                } for task in todos
+            ]
+            }
+
+    file_name = user_id + ".json"
+
+    with open(file_name, "w") as file:
+        json.dump(data, file)
 
 
 if __name__ == "__main__":
-    todo_url = "https://jsonplaceholder.typicode.com/user/{}/todos".format(
-        argv[1])
-    name_url = "https://jsonplaceholder.typicode.com/users/{}".format(argv[1])
-    todo_result = get(todo_url).json()
-    name_result = get(name_url).json()
-
-    todo_list = []
-    for todo in todo_result:
-        todo_dict = {}
-        todo_dict.update({"task": todo.get("title"), "completed": todo.get(
-            "completed"), "username": name_result.get("username")})
-        todo_list.append(todo_dict)
-
-    with open("{}.json".format(argv[1]), 'w') as f:
-        dump({argv[1]: todo_list}, f)
+    """main function"""
+    get_employee_todos(argv[1])

@@ -1,25 +1,47 @@
-#!/usr/bin/python3
-"""script that use rest api for a given employee ID"""
-from csv import DictWriter, QUOTE_ALL
-from requests import get
+#!/usr#!/usr/bin/python3
+"""a module to get data from an API"""
 from sys import argv
+import csv
+import requests
+
+
+def get_employee_todos(user_id):
+    """get the reponse and format and print data"""
+    number_completed = 0
+
+    todos_url = "https://jsonplaceholder.typicode.com/todos?userId={}".format(
+        user_id)
+    todos_response = requests.get(todos_url)
+    todos = todos_response.json()
+
+    user_url = "https://jsonplaceholder.typicode.com/users/{}".format(user_id)
+    user_response = requests.get(user_url)
+    user = user_response.json()
+
+    employee_name = user.get("username")
+
+    for task in todos:
+        if task.get("completed"):
+            number_completed += 1
+
+    data = [
+        ["userId", "userName", "completed", "title"]
+    ]
+
+    for task in todos:
+        newrow = [task.get("userId"), employee_name,
+                  task.get("completed"), task.get("title")]
+        data.append(newrow)
+
+        file_name = user_id + ".csv"
+
+    with open(file_name, mode="w") as file:
+        writer = csv.writer(file, quoting=csv.QUOTE_ALL)
+        writer.writerows(data[1:])
+
+        print(user)
 
 
 if __name__ == "__main__":
-    main_url = "https://jsonplaceholder.typicode.com"
-    todo_url = main_url + "/user/{}/todos".format(argv[1])
-    name_url = main_url + "/users/{}".format(argv[1])
-    todo_result = get(todo_url).json()
-    name_result = get(name_url).json()
-
-    todo_list = []
-    for todo in todo_result:
-        todo_dict = {}
-        todo_dict.update({"user_ID": argv[1], "username": name_result.get(
-            "username"), "completed": todo.get("completed"),
-                          "task": todo.get("title")})
-        todo_list.append(todo_dict)
-    with open("{}.csv".format(argv[1]), 'w', newline='') as f:
-        header = ["user_ID", "username", "completed", "task"]
-        writer = DictWriter(f, fieldnames=header, quoting=QUOTE_ALL)
-        writer.writerows(todo_list)
+    """main function"""
+    get_employee_todos(argv[1])
