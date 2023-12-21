@@ -1,38 +1,36 @@
 #!/usr/bin/python3
-"""
-Uses the JSON placeholder api to query data about an employee
-"""
-from sys import argv
+"""a module to get data from an API"""
 import requests
+import sys
 
+def get_employee_todo_progress(employee_id):
+    base_url = f'https://jsonplaceholder.typicode.com/users/{employee_id}'
+    todos_url = f'https://jsonplaceholder.typicode.com/todos?userId={employee_id}'
 
-def get_employee_todos(user_id):
-    """get the reponse and format and print data"""
-    number_completed = 0
-
-    todos_url = "https://jsonplaceholder.typicode.com/todos?userId={}".format(
-        user_id)
+    # Fetch user data
+    user_response = requests.get(base_url)
     todos_response = requests.get(todos_url)
-    todos = todos_response.json()
 
-    user_url = "https://jsonplaceholder.typicode.com/users/{}".format(user_id)
-    user_response = requests.get(user_url)
-    user = user_response.json()
+    if user_response.status_code != 200 or todos_response.status_code != 200:
+        print("Failed to fetch data.")
+        return
 
-    employee_name = user.get("name")
+    user_data = user_response.json()
+    todos_data = todos_response.json()
 
-    for task in todos:
-        if task.get("completed"):
-            number_completed += 1
+    # Filter completed and total tasks
+    completed_tasks = [task['title'] for task in todos_data if task['completed']]
+    total_tasks = len(todos_data)
+    number_of_completed_tasks = len(completed_tasks)
 
-    print("Employee {} is done with tasks({}/{}):".format(
-        employee_name, number_completed, len(todos)))
-    for task in todos:
-        if task.get("completed"):
-            formated_title = "	 " + task.get("title")
-            print("{}".format(formated_title))
-
+    # Display progress
+    print(f"Employee {user_data['name']} is done with tasks({number_of_completed_tasks}/{total_tasks}):")
+    for task in completed_tasks:
+        print(f"\t{task}")
 
 if __name__ == "__main__":
-    """main function"""
-    get_employee_todos(argv[1])
+    if len(sys.argv) != 2:
+        print("Usage: python script_name.py <employee_id>")
+    else:
+        employee_id = int(sys.argv[1])
+        get_employee_todo_progress(employee_id)
